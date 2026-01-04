@@ -47,38 +47,38 @@ limitations under the License.
 Here is an example:
 
 ```diff
-  import torch
-  import torch.nn.functional as F
-  from datasets import load_dataset
+ import torch
+ import torch.nn.functional as F
+ from datasets import load_dataset
 + from accelerate import Accelerator
 
 + accelerator = Accelerator()
 - device = 'cpu'
 + device = accelerator.device
 
-  model = torch.nn.Transformer().to(device)
-  optimizer = torch.optim.Adam(model.parameters())
+ model = torch.nn.Transformer().to(device)
+ optimizer = torch.optim.Adam(model.parameters())
 
-  dataset = load_dataset('my_dataset')
-  data = torch.utils.data.DataLoader(dataset, shuffle=True)
+ dataset = load_dataset('my_dataset')
+ data = torch.utils.data.DataLoader(dataset, shuffle=True)
 
 + model, optimizer, data = accelerator.prepare(model, optimizer, data)
 
-  model.train()
-  for epoch in range(10):
-      for source, targets in data:
-          source = source.to(device)
-          targets = targets.to(device)
+ model.train()
+ for epoch in range(10):
+ for source, targets in data:
+ source = source.to(device)
+ targets = targets.to(device)
 
-          optimizer.zero_grad()
+ optimizer.zero_grad()
 
-          output = model(source)
-          loss = F.cross_entropy(output, targets)
+ output = model(source)
+ loss = F.cross_entropy(output, targets)
 
--         loss.backward()
-+         accelerator.backward(loss)
+- loss.backward()
++ accelerator.backward(loss)
 
-          optimizer.step()
+ optimizer.step()
 ```
 
 As you can see in this example, by adding 5-lines to any standard PyTorch training script you can now run on any kind of single or distributed node setting (single CPU, single GPU, multi-GPUs and TPUs) as well as with or without mixed precision (fp8, fp16, bf16).
@@ -88,9 +88,9 @@ In particular, the same code can then be run without modification on your local 
  Accelerate even handles the device placement for you (which requires a few more changes to your code, but is safer in general), so you can even simplify your training loop further:
 
 ```diff
-  import torch
-  import torch.nn.functional as F
-  from datasets import load_dataset
+ import torch
+ import torch.nn.functional as F
+ from datasets import load_dataset
 + from accelerate import Accelerator
 
 - device = 'cpu'
@@ -98,28 +98,28 @@ In particular, the same code can then be run without modification on your local 
 
 - model = torch.nn.Transformer().to(device)
 + model = torch.nn.Transformer()
-  optimizer = torch.optim.Adam(model.parameters())
+ optimizer = torch.optim.Adam(model.parameters())
 
-  dataset = load_dataset('my_dataset')
-  data = torch.utils.data.DataLoader(dataset, shuffle=True)
+ dataset = load_dataset('my_dataset')
+ data = torch.utils.data.DataLoader(dataset, shuffle=True)
 
 + model, optimizer, data = accelerator.prepare(model, optimizer, data)
 
-  model.train()
-  for epoch in range(10):
-      for source, targets in data:
--         source = source.to(device)
--         targets = targets.to(device)
+ model.train()
+ for epoch in range(10):
+ for source, targets in data:
+- source = source.to(device)
+- targets = targets.to(device)
 
-          optimizer.zero_grad()
+ optimizer.zero_grad()
 
-          output = model(source)
-          loss = F.cross_entropy(output, targets)
+ output = model(source)
+ loss = F.cross_entropy(output, targets)
 
--         loss.backward()
-+         accelerator.backward(loss)
+- loss.backward()
++ accelerator.backward(loss)
 
-          optimizer.step()
+ optimizer.step()
 ```
 
 Want to learn more? Check out the [documentation](https://huggingface.co/docs/accelerate) or have a look at our [examples](https://github.com/huggingface/accelerate/tree/main/examples).
@@ -188,7 +188,7 @@ from accelerate import Accelerator, DeepSpeedPlugin
 deepspeed_plugin = DeepSpeedPlugin(zero_stage=2, gradient_accumulation_steps=2)
 accelerator = Accelerator(mixed_precision='fp16', deepspeed_plugin=deepspeed_plugin)
 
-# How to save your 🤗 Transformer?
+# How to save your Transformer?
 accelerator.wait_for_everyone()
 unwrapped_model = accelerator.unwrap_model(model)
 unwrapped_model.save_pretrained(save_dir, save_function=accelerator.save, state_dict=accelerator.get_state_dict(model))
@@ -269,9 +269,9 @@ If you use Accelerate in your publication, please cite it by using the following
 
 ```bibtex
 @Misc{accelerate,
-  title =        {Accelerate: Training and inference at scale made simple, efficient and adaptable.},
-  author =       {Sylvain Gugger and Lysandre Debut and Thomas Wolf and Philipp Schmid and Zachary Mueller and Sourab Mangrulkar and Marc Sun and Benjamin Bossan},
-  howpublished = {\url{https://github.com/huggingface/accelerate}},
-  year =         {2022}
+ title = {Accelerate: Training and inference at scale made simple, efficient and adaptable.},
+ author = {Sylvain Gugger and Lysandre Debut and Thomas Wolf and Philipp Schmid and Zachary Mueller and Sourab Mangrulkar and Marc Sun and Benjamin Bossan},
+ howpublished = {\url{https://github.com/huggingface/accelerate}},
+ year = {2022}
 }
 ```
